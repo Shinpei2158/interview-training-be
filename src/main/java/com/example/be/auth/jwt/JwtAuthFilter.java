@@ -30,8 +30,7 @@ public class JwtAuthFilter
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+            FilterChain filterChain) throws ServletException, IOException {
 
         String token = null;
 
@@ -48,30 +47,33 @@ public class JwtAuthFilter
             return;
         }
 
-        String email = jwtService.extractEmail(token);
+        String email = null;
+
+        try {
+            email = jwtService.extractEmail(token);
+        } catch (Exception e) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (email != null
                 && SecurityContextHolder
-                .getContext()
-                .getAuthentication() == null) {
+                        .getContext()
+                        .getAuthentication() == null) {
 
-            UserDetails userDetails =
-                    userDetailsService
-                            .loadUserByUsername(email);
+            UserDetails userDetails = userDetailsService
+                    .loadUserByUsername(email);
 
-            if (jwtService.isValidToken(token)) {
+            if (jwtService.isValidToken(token, userDetails)) {
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
 
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
+                                .buildDetails(request));
 
                 SecurityContextHolder.getContext()
                         .setAuthentication(authToken);

@@ -11,21 +11,21 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class CustomUserDetailsService
-        implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(
-            String email
-    ) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email)
+            throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException(
-                                "User not found"
-                        ));
+                        new UsernameNotFoundException("User not found"));
+
+        if (!user.isActive()) {
+            throw new UsernameNotFoundException("User is disabled");
+        }
 
         return org.springframework.security.core.userdetails.User
                 .builder()

@@ -10,24 +10,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<?> handleBadRequest(BadRequestException ex) {
+    @ExceptionHandler(GlobalException.class)
+    public ResponseEntity<?> handleGlobalException(GlobalException ex) {
+        HttpStatus status = switch (ex.getCode()) {
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
+            case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+        };
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(status)
                 .body(Map.of(
-                        "message", ex.getMessage()
-                ));
-    }
-
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<?> handleUnauthorized(
-            UnauthorizedException ex
-    ) {
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
+                        "code", ex.getCode().name(),
                         "message", ex.getMessage()
                 ));
     }

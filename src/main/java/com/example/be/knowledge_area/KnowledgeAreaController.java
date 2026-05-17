@@ -1,4 +1,4 @@
-package com.example.be.user;
+package com.example.be.knowledge_area;
 
 import java.util.UUID;
 
@@ -18,56 +18,60 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.be.enums.Role;
-import com.example.be.user.dto.UserCreateRequest;
-import com.example.be.user.dto.UserResponse;
-import com.example.be.user.dto.UserUpdateRequest;
+import com.example.be.knowledge_area.dto.KnowledgeAreaCreateRequest;
+import com.example.be.knowledge_area.dto.KnowledgeAreaResponse;
+import com.example.be.knowledge_area.dto.KnowledgeAreaUpdateRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/knowledge-areas")
 @RequiredArgsConstructor
-public class UserController {
+public class KnowledgeAreaController {
 
-    private final UserService userService;
+    private final KnowledgeAreaService knowledgeAreaService;
 
     @GetMapping
-    public Page<UserResponse> list(
-            @RequestParam(required = false) Role role,
+    public Page<KnowledgeAreaResponse> list(
+            @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String search,
-            @PageableDefault(size = 20, sort = "email", direction = Sort.Direction.ASC)
+            @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC)
             Pageable pageable
     ) {
-        return userService.findAll(role, active, search, pageable);
+        return knowledgeAreaService.findAll(
+                categoryId,
+                active,
+                search,
+                pageable
+        );
     }
 
     @GetMapping("/{id}")
-    public UserResponse getById(@PathVariable UUID id) {
-        return userService.findById(id);
+    public KnowledgeAreaResponse getById(@PathVariable UUID id) {
+        return knowledgeAreaService.findById(id);
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> create(
-            @Valid @RequestBody UserCreateRequest request
+    public ResponseEntity<KnowledgeAreaResponse> create(
+            @Valid @RequestBody KnowledgeAreaCreateRequest request
     ) {
-        UserResponse created = userService.create(request);
+        KnowledgeAreaResponse created = knowledgeAreaService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public UserResponse update(
+    public KnowledgeAreaResponse update(
             @PathVariable UUID id,
-            @Valid @RequestBody UserUpdateRequest request
+            @Valid @RequestBody KnowledgeAreaUpdateRequest request
     ) {
-        return userService.update(id, request);
+        return knowledgeAreaService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+        knowledgeAreaService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

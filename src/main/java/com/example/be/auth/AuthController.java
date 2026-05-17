@@ -2,14 +2,19 @@ package com.example.be.auth;
 
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.Cookie;
+import com.example.be.auth.dto.LoginRequest;
+import com.example.be.auth.dto.RegisterRequest;
+
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -21,41 +26,38 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(
-            @RequestBody Map<String, String> body
-    ) {
+            @Valid @RequestBody RegisterRequest request) {
 
-        String email = body.get("email");
-        String password = body.get("password");
+        authService.register(
+                request.getEmail(),
+                request.getPassword());
 
-        authService.register(email, password);
-
-        return ResponseEntity.ok("Register success");
+        return ResponseEntity.ok(
+                Map.of("message", "Register success"));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(
-            @RequestBody Map<String, String> body,
-            HttpServletResponse response
-    ) {
+            @RequestBody LoginRequest request,
+            HttpServletResponse response) {
 
-        String email = body.get("email");
-        String password = body.get("password");
+        String token = authService.login(
+                request.getEmail(),
+                request.getPassword());
 
-        String token = authService.login(email, password);
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(60 * 60 * 24)
+                .build();
 
-        Cookie cookie = new Cookie("token", token);
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString());
 
-        cookie.setHttpOnly(true);
-
-        cookie.setPath("/");
-
-        cookie.setMaxAge(60 * 60 * 24);
-
-        response.addCookie(cookie);
-
-        return ResponseEntity.ok(Map.of(
-        "message", "Login success",
-        "token", token
-));
+        return ResponseEntity.ok(
+                Map.of("message", "Login success"));
     }
 }

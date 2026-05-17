@@ -1,4 +1,4 @@
-package com.example.be.user;
+package com.example.be.topic;
 
 import java.util.UUID;
 
@@ -18,56 +18,60 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.be.enums.Role;
-import com.example.be.user.dto.UserCreateRequest;
-import com.example.be.user.dto.UserResponse;
-import com.example.be.user.dto.UserUpdateRequest;
+import com.example.be.topic.dto.TopicCreateRequest;
+import com.example.be.topic.dto.TopicResponse;
+import com.example.be.topic.dto.TopicUpdateRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/topics")
 @RequiredArgsConstructor
-public class UserController {
+public class TopicController {
 
-    private final UserService userService;
+    private final TopicService topicService;
 
     @GetMapping
-    public Page<UserResponse> list(
-            @RequestParam(required = false) Role role,
+    public Page<TopicResponse> list(
+            @RequestParam(required = false) UUID knowledgeAreaId,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String search,
-            @PageableDefault(size = 20, sort = "email", direction = Sort.Direction.ASC)
+            @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC)
             Pageable pageable
     ) {
-        return userService.findAll(role, active, search, pageable);
+        return topicService.findAll(
+                knowledgeAreaId,
+                active,
+                search,
+                pageable
+        );
     }
 
     @GetMapping("/{id}")
-    public UserResponse getById(@PathVariable UUID id) {
-        return userService.findById(id);
+    public TopicResponse getById(@PathVariable UUID id) {
+        return topicService.findById(id);
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> create(
-            @Valid @RequestBody UserCreateRequest request
+    public ResponseEntity<TopicResponse> create(
+            @Valid @RequestBody TopicCreateRequest request
     ) {
-        UserResponse created = userService.create(request);
+        TopicResponse created = topicService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public UserResponse update(
+    public TopicResponse update(
             @PathVariable UUID id,
-            @Valid @RequestBody UserUpdateRequest request
+            @Valid @RequestBody TopicUpdateRequest request
     ) {
-        return userService.update(id, request);
+        return topicService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+        topicService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

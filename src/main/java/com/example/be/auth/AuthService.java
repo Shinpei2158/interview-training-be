@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import com.example.be.auth.jwt.JwtService;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
-import com.example.be.exception.UnauthorizedException;
+import com.example.be.exception.GlobalException;
 import com.example.be.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,29 +20,33 @@ public class AuthService {
     private final JwtService jwtService;
 
     public User register(String email, String password) {
-        boolean existed = userRepository.existsByEmail(email);
+        String normalizedEmail = email.trim().toLowerCase();
+        boolean existed = userRepository.existsByEmailIgnoreCase(normalizedEmail);
 
         if (existed) {
-            throw new UnauthorizedException("Email already exists");
+            throw GlobalException.unauthorized("Email already exists");
         }
 
         String hashedPassword = passwordEncoder.encode(password);
 
         User user = User.builder()
-                .email(email)
+                .email(normalizedEmail)
                 .password(hashedPassword)
                 .role(Role.USER)
+                .isActive(true)
                 .build();
 
         return userRepository.save(user);
     }
 
-
     public String login(String email, String password) {
-
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email.trim().toLowerCase())
                 .orElseThrow(() ->
-                        new UnauthorizedException("Email or password is incorrect"));
+                        GlobalException.unauthorized("Email or password is incorrect"));
+
+        if (!user.isActive()) {
+            throw GlobalException.unauthorized("Email or password is incorrect");
+        }
 
         boolean matched = passwordEncoder.matches(
                 password,
@@ -50,7 +54,7 @@ public class AuthService {
         );
 
         if (!matched) {
-            throw new UnauthorizedException("Email or password is incorrect");
+            throw GlobalException.unauthorized("Email or password is incorrect");
         }
 
         return jwtService.generateToken(user);
